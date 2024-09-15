@@ -220,8 +220,8 @@
       animateLineClear(linesCleared, () => {
         // After animation, remove the lines and update the score
         linesCleared.forEach(y => {
-          const row = arena.splice(y, 1)[0].fill(0);
-          arena.unshift(row);
+          arena.splice(y, 1);
+          arena.unshift(new Array(arena[0].length).fill(0));
         });
 
         let points = [0, 40, 100, 300, 1200];
@@ -235,59 +235,59 @@
   function animateLineClear(linesCleared, callback) {
     paused = true;
     const totalDuration = 500; // in milliseconds
-    const steps = 20;
-    const delay = totalDuration / steps;
+    const steps = linesCleared.length * arena[0].length;
+    const delay = totalDuration / (steps * 2); // Multiply by 2 for lighting and deletion phases
     let currentStep = 0;
-    let cellsToAnimate = [];
 
-    // Collect cells to animate in order
+    let cellsToLight = [];
+    let cellsToDelete = [];
+
+    // Collect cells to light up (bottom to top, left to right)
     for (let y of linesCleared) {
       for (let x = 0; x < arena[y].length; x++) {
         let value = arena[y][x];
-        cellsToAnimate.push({x, y, value});
+        cellsToLight.push({x, y, value});
       }
     }
 
-    function animate() {
-      if (currentStep < steps) {
-        let numCellsToLight = Math.min(cellsToAnimate.length, currentStep + 4);
-        let numCellsToDelete = currentStep >= 4 ? Math.min(cellsToAnimate.length, currentStep - 4) : 0;
+    // Collect cells to delete (top to bottom, right to left)
+    for (let y of linesCleared.slice().reverse()) {
+      for (let x = arena[y].length - 1; x >= 0; x--) {
+        cellsToDelete.push({x, y});
+      }
+    }
 
-        draw(); // Clear and redraw the arena and player
+    function animateLighting() {
+      if (currentStep < cellsToLight.length) {
+        const cell = cellsToLight[currentStep];
+        draw(); // Redraw arena and player
 
-        // Draw animated cells
-        for (let i = 0; i < numCellsToLight; i++) {
-          const cell = cellsToAnimate[i];
-          if (cell) {
-            let colorIndex = cell.value;
-            context.fillStyle = getBrightColor(colorIndex);
-            context.fillRect(cell.x, cell.y, 1, 1);
-          }
-        }
-
-        // Remove cells
-        for (let i = 0; i < numCellsToDelete; i++) {
-          const cell = cellsToAnimate[i];
-          if (cell) {
-            arena[cell.y][cell.x] = 0;
-          }
-        }
+        // Draw lit-up cell
+        context.fillStyle = getBrightColor(cell.value);
+        context.fillRect(cell.x, cell.y, 1, 1);
 
         currentStep++;
-        setTimeout(animate, delay);
+        setTimeout(animateLighting, delay);
       } else {
-        // Ensure all remaining cells are removed
-        cellsToAnimate.forEach(cell => {
-          if (cell) {
-            arena[cell.y][cell.x] = 0;
-          }
-        });
+        currentStep = 0;
+        setTimeout(animateDeletion, delay);
+      }
+    }
+
+    function animateDeletion() {
+      if (currentStep < cellsToDelete.length) {
+        const cell = cellsToDelete[currentStep];
+        arena[cell.y][cell.x] = 0;
+        draw(); // Redraw arena and player
+        currentStep++;
+        setTimeout(animateDeletion, delay);
+      } else {
         paused = false;
         callback();
       }
     }
 
-    animate();
+    animateLighting();
   }
 
   function drawMatrix(matrix, offset) {
