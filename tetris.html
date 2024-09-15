@@ -121,6 +121,7 @@
   let paused = false;
   let animating = false;
   let gameOver = false;
+  let gameRunning = false;
   let level = 0;
   let linesClearedTotal = 0;
 
@@ -456,6 +457,7 @@
             (player.matrix[0].length / 2 | 0);
     if (collide(arena, player)) {
       gameOver = true;
+      gameRunning = false; // Stop the game loop
       showGameOver();
       updateHighScore();
     }
@@ -489,6 +491,8 @@
   const softDropInterval = 50; // Adjust this value for desired soft drop speed (milliseconds)
 
   function update(time = 0) {
+    if (!gameRunning) return;
+
     if (!paused && !animating && !gameOver) {
       const deltaTime = time - lastTime;
       lastTime = time;
@@ -563,7 +567,7 @@
   }
 
   // Key state map to track which keys are pressed
-  const keyState = {};
+  let keyState = {};
 
   // Handle keydown events
   document.addEventListener('keydown', event => {
@@ -596,12 +600,14 @@
     player.score = 0;
     linesClearedTotal = 0;
     gameOver = false;
+    paused = false;
+    gameRunning = false; // Stop the game loop
     document.getElementById('gameOverOverlay').style.display = 'none';
     document.getElementById('levelSelectionOverlay').style.display = 'flex';
     updateScore();
 
-    // Initialize the player's piece
-    playerReset();
+    // Reset key states
+    keyState = {};
   }
 
   function showGameOver() {
@@ -622,8 +628,23 @@
 
   // Start the game only after the first piece is generated
   function startGame() {
+    // Reset timing variables
+    dropCounter = 0;
+    softDropCounter = 0;
     lastTime = performance.now();
-    update();
+    moveDelay = 0;
+    rotateDelay = 0;
+
+    // Reset key states
+    keyState = {};
+
+    // Initialize the player's piece
+    playerReset();
+
+    // Set gameRunning to true
+    gameRunning = true;
+
+    update(); // Start the game loop
   }
 
   document.getElementById('pauseButton').addEventListener('click', () => {
@@ -645,7 +666,7 @@
     level = startLevel;
     updateLevel();
     document.getElementById('levelSelectionOverlay').style.display = 'none';
-    playerReset();
+
     startGame();
   });
 
