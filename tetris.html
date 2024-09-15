@@ -161,6 +161,27 @@
     ],
   };
 
+  // Audio context for sound effects
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function playLineClearSound() {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime); // Start frequency
+    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2); // End frequency
+
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.2);
+  }
+
   function createMatrix(w, h) {
     const matrix = [];
     while (h--) {
@@ -226,6 +247,7 @@
     }
 
     if (linesCleared.length > 0) {
+      playLineClearSound();
       animating = true;
       animateLineClear(linesCleared, () => {
         // After animation, remove the lines and update the score
