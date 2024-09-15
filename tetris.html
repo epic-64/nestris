@@ -91,6 +91,28 @@
     score: 0
   };
 
+  const colors = [
+    null,
+    '#FF0D72', // Tetromino T
+    '#0DC2FF', // Tetromino O
+    '#0DFF72', // Tetromino L
+    '#F538FF', // Tetromino J
+    '#FF8E0D', // Tetromino I
+    '#FFE138', // Tetromino S
+    '#3877FF', // Tetromino Z
+  ];
+
+  const brightColors = [
+    null,
+    '#FF5A9D', // Brighter T
+    '#4DDCFF', // Brighter O
+    '#4DFF9F', // Brighter L
+    '#FF7AFF', // Brighter J
+    '#FFAC4D', // Brighter I
+    '#FFEB70', // Brighter S
+    '#709AFF', // Brighter Z
+  ];
+
   const tetrominoes = {
     'T': [
       [0, 0, 0],
@@ -183,7 +205,6 @@
   }
 
   function arenaSweep() {
-    let rowCount = 1;
     let linesCleared = [];
     outer: for (let y = arena.length -1; y >= 0; --y) {
       for (let x = 0; x < arena[y].length; ++x) {
@@ -214,56 +235,59 @@
   function animateLineClear(linesCleared, callback) {
     paused = true;
     const totalDuration = 500; // in milliseconds
-    const steps = 10;
+    const steps = 20;
     const delay = totalDuration / steps;
     let currentStep = 0;
-    let cellsToLight = [];
+    let cellsToAnimate = [];
 
-    // Collect cells to light up in order
-    for (let yIndex = 0; yIndex < linesCleared.length; yIndex++) {
-      let y = linesCleared[yIndex];
+    // Collect cells to animate in order
+    for (let y of linesCleared) {
       for (let x = 0; x < arena[y].length; x++) {
-        cellsToLight.push({x, y});
+        let value = arena[y][x];
+        cellsToAnimate.push({x, y, value});
       }
     }
 
-    function lightUpCells() {
+    function animate() {
       if (currentStep < steps) {
-        let fraction = currentStep / steps;
-        let numCells = Math.floor(fraction * cellsToLight.length);
+        let numCellsToLight = Math.min(cellsToAnimate.length, currentStep + 4);
+        let numCellsToDelete = currentStep >= 4 ? Math.min(cellsToAnimate.length, currentStep - 4) : 0;
 
         draw(); // Clear and redraw the arena and player
 
-        // Draw lit-up cells
-        for (let i = 0; i < numCells; i++) {
-          const cell = cellsToLight[i];
-          context.fillStyle = '#fff';
-          context.fillRect(cell.x, cell.y, 1, 1);
+        // Draw animated cells
+        for (let i = 0; i < numCellsToLight; i++) {
+          const cell = cellsToAnimate[i];
+          if (cell) {
+            let colorIndex = cell.value;
+            context.fillStyle = getBrightColor(colorIndex);
+            context.fillRect(cell.x, cell.y, 1, 1);
+          }
+        }
+
+        // Remove cells
+        for (let i = 0; i < numCellsToDelete; i++) {
+          const cell = cellsToAnimate[i];
+          if (cell) {
+            arena[cell.y][cell.x] = 0;
+          }
         }
 
         currentStep++;
-        setTimeout(lightUpCells, delay);
+        setTimeout(animate, delay);
       } else {
-        // After lighting up, remove cells one by one
-        removeCells(0);
-      }
-    }
-
-    function removeCells(index) {
-      if (index < cellsToLight.length) {
-        const cell = cellsToLight[index];
-        arena[cell.y][cell.x] = 0;
-
-        draw(); // Redraw the arena without the removed cell
-
-        setTimeout(() => removeCells(index + 1), delay / 2);
-      } else {
+        // Ensure all remaining cells are removed
+        cellsToAnimate.forEach(cell => {
+          if (cell) {
+            arena[cell.y][cell.x] = 0;
+          }
+        });
         paused = false;
         callback();
       }
     }
 
-    lightUpCells();
+    animate();
   }
 
   function drawMatrix(matrix, offset) {
@@ -288,17 +312,11 @@
   }
 
   function getColor(value) {
-    const colors = [
-      null,
-      '#FF0D72',
-      '#0DC2FF',
-      '#0DFF72',
-      '#F538FF',
-      '#FF8E0D',
-      '#FFE138',
-      '#3877FF',
-    ];
     return colors[value];
+  }
+
+  function getBrightColor(value) {
+    return brightColors[value];
   }
 
   function playerDrop() {
