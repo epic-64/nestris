@@ -164,22 +164,47 @@
   // Audio context for sound effects
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  function playLineClearSound() {
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+  function playSound(frequencies, durations) {
+    const currentTime = audioCtx.currentTime;
+    let time = currentTime;
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    frequencies.forEach((freq, index) => {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
-    oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime); // Start frequency
-    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2); // End frequency
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
 
-    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(freq, time);
 
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.2, time);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, time + durations[index]);
+
+      oscillator.start(time);
+      oscillator.stop(time + durations[index]);
+
+      time += durations[index];
+    });
+  }
+
+  function playPieceLockSound() {
+    // Simple sound when piece locks
+    playSound([150], [0.1]);
+  }
+
+  function playLineClearSound(linesCleared) {
+    // Different sounds based on lines cleared
+    if (linesCleared === 1) {
+      playSound([200, 250], [0.1, 0.1]);
+    } else if (linesCleared === 2) {
+      playSound([250, 300, 350], [0.1, 0.1, 0.1]);
+    } else if (linesCleared === 3) {
+      playSound([300, 350, 400, 450], [0.1, 0.1, 0.1, 0.1]);
+    } else if (linesCleared === 4) {
+      // Tetris jingle
+      playSound([440, 550, 660, 880], [0.15, 0.15, 0.15, 0.15]);
+    }
   }
 
   function createMatrix(w, h) {
@@ -247,7 +272,7 @@
     }
 
     if (linesCleared.length > 0) {
-      playLineClearSound();
+      playLineClearSound(linesCleared.length);
       animating = true;
       animateLineClear(linesCleared, () => {
         // After animation, remove the lines and update the score
@@ -286,8 +311,6 @@
     }
 
     const perCellDuration = 20; // milliseconds per cell
-    const totalLightingDuration = cellsToAnimate.length * perCellDuration;
-    const totalDeletionDuration = cellsToDelete.length * perCellDuration;
 
     let currentStep = 0;
 
@@ -358,6 +381,7 @@
     if (collide(arena, player)) {
       player.pos.y--;
       merge(arena, player);
+      playPieceLockSound();
       playerReset();
       arenaSweep();
     }
