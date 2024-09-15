@@ -32,8 +32,13 @@
       font-size: 24px;
     }
 
-    #pauseButton {
+    #controls {
       margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-button {
       padding: 10px 20px;
       font-size: 16px;
       background-color: #555;
@@ -42,7 +47,7 @@
       cursor: pointer;
     }
 
-    #pauseButton:hover {
+    .control-button:hover {
       background-color: #666;
     }
 
@@ -68,8 +73,12 @@
     <canvas id="gameCanvas" width="200" height="400"></canvas>
     <div id="pauseOverlay">Paused</div>
   </div>
-  <div id="score">Score: 0</div>
-  <button id="pauseButton">Pause</button>
+  <div id="score">Score: 0 | Level: 1</div>
+  <div id="controls">
+    <button id="pauseButton" class="control-button">Pause</button>
+    <button id="levelDownButton" class="control-button">Level -</button>
+    <button id="levelUpButton" class="control-button">Level +</button>
+  </div>
 </div>
 
 <script>
@@ -84,6 +93,7 @@
   let lastTime = 0;
   let paused = false;
   let animating = false;
+  let level = 1;
 
   const player = {
     pos: {x: 0, y: 0},
@@ -225,7 +235,7 @@
         });
 
         let points = [0, 40, 100, 300, 1200];
-        player.score += points[linesCleared.length];
+        player.score += points[linesCleared.length] * level;
         updateScore();
         animating = false;
       });
@@ -234,32 +244,34 @@
 
   function animateLineClear(linesCleared, callback) {
     paused = true;
-    const totalDuration = 500; // in milliseconds
-    const steps = linesCleared.length * arena[0].length;
-    const delay = totalDuration / (steps * 2); // Multiply by 2 for lighting and deletion phases
-    let currentStep = 0;
 
-    let cellsToLight = [];
-    let cellsToDelete = [];
+    let cellsToAnimate = [];
 
     // Collect cells to light up (bottom to top, left to right)
     for (let y of linesCleared) {
       for (let x = 0; x < arena[y].length; x++) {
         let value = arena[y][x];
-        cellsToLight.push({x, y, value});
+        cellsToAnimate.push({x, y, value});
       }
     }
 
     // Collect cells to delete (top to bottom, right to left)
+    let cellsToDelete = [];
     for (let y of linesCleared.slice().reverse()) {
       for (let x = arena[y].length - 1; x >= 0; x--) {
         cellsToDelete.push({x, y});
       }
     }
 
+    const perCellDuration = 20; // milliseconds per cell
+    const totalLightingDuration = cellsToAnimate.length * perCellDuration;
+    const totalDeletionDuration = cellsToDelete.length * perCellDuration;
+
+    let currentStep = 0;
+
     function animateLighting() {
-      if (currentStep < cellsToLight.length) {
-        const cell = cellsToLight[currentStep];
+      if (currentStep < cellsToAnimate.length) {
+        const cell = cellsToAnimate[currentStep];
         draw(); // Redraw arena and player
 
         // Draw lit-up cell
@@ -267,10 +279,10 @@
         context.fillRect(cell.x, cell.y, 1, 1);
 
         currentStep++;
-        setTimeout(animateLighting, delay);
+        setTimeout(animateLighting, perCellDuration);
       } else {
         currentStep = 0;
-        setTimeout(animateDeletion, delay);
+        setTimeout(animateDeletion, perCellDuration);
       }
     }
 
@@ -280,7 +292,7 @@
         arena[cell.y][cell.x] = 0;
         draw(); // Redraw arena and player
         currentStep++;
-        setTimeout(animateDeletion, delay);
+        setTimeout(animateDeletion, perCellDuration);
       } else {
         paused = false;
         callback();
@@ -346,6 +358,7 @@
     if (collide(arena, player)) {
       arena.forEach(row => row.fill(0));
       player.score = 0;
+      level = 1;
       updateScore();
     }
   }
@@ -385,7 +398,7 @@
   }
 
   function updateScore() {
-    document.getElementById('score').innerText = 'Score: ' + player.score;
+    document.getElementById('score').innerText = 'Score: ' + player.score + ' | Level: ' + level;
   }
 
   document.addEventListener('keydown', event => {
@@ -414,6 +427,29 @@
       togglePause();
     }
   });
+
+  document.getElementById('levelUpButton').addEventListener('click', () => {
+    if (level < 20) {
+      level++;
+      updateLevel();
+    }
+  });
+
+  document.getElementById('levelDownButton').addEventListener('click', () => {
+    if (level > 1) {
+      level--;
+      updateLevel();
+    }
+  });
+
+  function updateLevel() {
+    // Decrease drop interval as level increases
+    dropInterval = 1000 - (level - 1) * 50;
+    if (dropInterval < 100) {
+      dropInterval = 100;
+    }
+    updateScore();
+  }
 
   function togglePause() {
     paused = !paused;
