@@ -332,7 +332,7 @@
         let points = [0, 40, 100, 300, 1200];
         player.score += points[linesCleared.length] * (level + 1);
         linesClearedTotal += linesCleared.length;
-        level = Math.min(10, Math.floor(linesClearedTotal / 10) + startLevel);
+        level = Math.min(10, startLevel + Math.floor(linesClearedTotal / 10));
         updateLevel();
         animating = false;
       });
@@ -468,21 +468,17 @@
   }
 
   function playerRotate(dir) {
-    const now = performance.now();
-    if (now - rotateDelay > rotateInterval) {
-      const pos = player.pos.x;
-      let offset = 1;
-      rotate(player.matrix, dir);
-      while (collide(arena, player)) {
-        player.pos.x += offset;
-        offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) {
-          rotate(player.matrix, -dir);
-          player.pos.x = pos;
-          return;
-        }
+    const pos = player.pos.x;
+    let offset = 1;
+    rotate(player.matrix, dir);
+    while (collide(arena, player)) {
+      player.pos.x += offset;
+      offset = -(offset + (offset > 0 ? 1 : -1));
+      if (offset > player.matrix[0].length) {
+        rotate(player.matrix, -dir);
+        player.pos.x = pos;
+        return;
       }
-      rotateDelay = now;
     }
   }
 
@@ -552,17 +548,6 @@
     if (keyState['ArrowRight']) {
       playerMove(1);
     }
-    // Rotate Counterclockwise
-    if (keyState['KeyQ']) {
-      playerRotate(-1);
-      keyState['KeyQ'] = false; // Prevent continuous rotation
-    }
-    // Rotate Clockwise
-    if (keyState['KeyW'] || keyState['ArrowUp']) {
-      playerRotate(1);
-      keyState['KeyW'] = false; // Prevent continuous rotation
-      keyState['ArrowUp'] = false; // Prevent continuous rotation
-    }
     // Note: Soft drop is handled in the update() function
   }
 
@@ -572,6 +557,14 @@
   // Handle keydown events
   document.addEventListener('keydown', event => {
     if (!paused && !animating && !gameOver) {
+      if (!event.repeat) {
+        // Process rotations on keydown, ignoring repeats
+        if (event.code === 'KeyQ') {
+          playerRotate(-1);
+        } else if (event.code === 'KeyW' || event.code === 'ArrowUp') {
+          playerRotate(1);
+        }
+      }
       keyState[event.code] = true;
     }
     if (event.code === 'Escape') { // Escape key to toggle pause
@@ -588,17 +581,12 @@
     }
   });
 
-  // Movement and rotation delays
+  // Movement delays
   let moveDelay = 0;
   let moveInterval = 100; // milliseconds between moves
 
-  let rotateDelay = 0;
-  let rotateInterval = 150; // milliseconds between rotations
-
   function resetGame() {
-    arena.forEach(row => row.fill(0));
     player.score = 0;
-    linesClearedTotal = 0;
     gameOver = false;
     paused = false;
     gameRunning = false; // Stop the game loop
@@ -633,10 +621,15 @@
     softDropCounter = 0;
     lastTime = performance.now();
     moveDelay = 0;
-    rotateDelay = 0;
 
     // Reset key states
     keyState = {};
+
+    // Reset lines cleared total
+    linesClearedTotal = 0;
+
+    // Clear the arena
+    arena.forEach(row => row.fill(0));
 
     // Initialize the player's piece
     playerReset();
