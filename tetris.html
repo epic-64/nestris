@@ -97,23 +97,29 @@
 <div id="tetris">
   <div style="position: relative;">
     <canvas id="gameCanvas" width="200" height="400"></canvas>
+
     <div id="pauseOverlay">Paused</div>
+
     <div id="gameOverOverlay">
       <div>Game Over</div>
       <div id="finalScore"></div>
       <button id="restartButton" class="control-button">Restart</button>
     </div>
+
     <div id="levelSelectionOverlay">
       <div>Select Starting Level (0-10):</div>
       <input type="number" id="startLevelInput" min="0" max="10" value="0">
       <button id="startGameButton" class="control-button">Start Game</button>
     </div>
   </div>
+
   <div id="score">Score: 0 | Level: 0</div>
   <div id="highScore">High Score: 0</div>
+
   <div id="controls">
     <button id="pauseButton" class="control-button">Pause</button>
   </div>
+
   <!-- Debug Information -->
   <div id="debugInfo"></div>
 </div>
@@ -349,7 +355,7 @@
         frameCount = 0;
 
         // Update debug info
-        updateDebugInfo();
+        updateDebugDisplay();
       });
     }
   }
@@ -514,7 +520,7 @@
     requestAnimationFrame(update);
   }
 
-  function updateScore() {
+  function updateScoreDisplay() {
     document.getElementById('score').innerText = 'Score: ' + player.score + ' | Level: ' + level;
   }
 
@@ -530,8 +536,8 @@
     framesPerDrop = getFramesPerDrop(level);
     framesPerSoftDrop = Math.max(1, Math.min(Math.floor(framesPerDrop * softDropSpeedMultiplier), 5));
     keyState = {};
-    updateScore();
-    updateDebugInfo();
+    updateScoreDisplay();
+    updateDebugDisplay();
   }
 
   function getFramesPerDrop(level) {
@@ -619,7 +625,7 @@
     gameRunning = false; // Stop the game loop
     document.getElementById('gameOverOverlay').style.display = 'none';
     document.getElementById('levelSelectionOverlay').style.display = 'flex';
-    updateScore();
+    updateScoreDisplay();
 
     // Reset key states
     keyState = {};
@@ -631,7 +637,7 @@
     arena.forEach(row => row.fill(0));
 
     // Update debug info
-    updateDebugInfo();
+    updateDebugDisplay();
   }
 
   function showGameOver() {
@@ -677,7 +683,7 @@
     gameRunning = true;
 
     updateLevel();
-    updateDebugInfo();
+    updateDebugDisplay();
 
     update(); // Start the game loop
   }
@@ -708,10 +714,8 @@
   // Initialize the game (do not start the update loop yet)
   document.getElementById('levelSelectionOverlay').style.display = 'flex';
 
-  updateScore();
-
   // Debug Information Function
-  function updateDebugInfo() {
+  function updateDebugDisplay() {
     const framesPerDropValue = framesPerDropTable[level] || 5;
     document.getElementById('debugInfo').innerHTML = `
                 <strong>Debug Info:</strong><br>
@@ -722,8 +726,8 @@
             `;
   }
 
-  updateDebugInfo(); // Initial call to display debug info
-
+  updateScoreDisplay();
+  updateDebugDisplay(); // Initial call to display debug info
 </script>
 </body>
 </html>
