@@ -1,12 +1,8 @@
 class HighScore {
-    constructor({storageKey, htmlElementId}) {
-        console.log('HighScore constructor')
-        console.log(storageKey)
-        console.log(htmlElementId)
-
+    constructor({storageKey, htmlElement}) {
         this.highScore = 0
         this.storageKey = storageKey
-        this.htmlElementId = htmlElementId
+        this.htmlElement = htmlElement
     }
 
     init() {
@@ -15,15 +11,15 @@ class HighScore {
     }
 
     load() {
-        this.highScore = window.localStorage.getItem(this.storageKey) || 0
+        this.highScore = localStorage.getItem(this.storageKey) || 0
     }
 
     save() {
-        window.localStorage.setItem(this.storageKey, this.highScore);
+        localStorage.setItem(this.storageKey, this.highScore);
     }
 
     display() {
-        // window.document.getElementById(this.htmlElementId).innerText = 'High Score: ' + this.highScore;
+        this.htmlElement.innerText = this.highScore;
     }
 
     update(score) {

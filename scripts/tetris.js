@@ -13,7 +13,10 @@ let gameRunning = false;
 let level = 0;
 let linesClearedTotal = 0;
 
-highScore = new HighScore({storageKey: 'tetrisHighScore', htmlElementId: 'highScore'});
+highScore = new HighScore({
+    storageKey: 'tetrisHighScore',
+    htmlElement: window.document.getElementById('high-score-inner')
+});
 highScore.init();
 
 const player = {
