@@ -10,6 +10,8 @@ class Player {
 
         if (collide(arena, this)) {
             this.pos.x -= dir;
+        } else {
+            soundModule.playMovementSound();
         }
     }
 
@@ -17,6 +19,8 @@ class Player {
         const pos = this.pos.x;
         let offset = 1;
         rotate(this.matrix, dir);
+
+        soundModule.playRotationSound();
 
         while (collide(arena, this)) {
             this.pos.x += offset;

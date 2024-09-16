@@ -42,5 +42,13 @@ class SoundModule
             this.playSound([440, 550, 660, 880], [0.15, 0.15, 0.15, 0.15]);
         }
     }
+
+    playMovementSound() {
+        this.playSound([100], [0.1]);
+    }
+
+    playRotationSound() {
+        this.playSound([200], [0.1]);
+    }
 }
 
