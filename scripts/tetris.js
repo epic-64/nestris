@@ -13,8 +13,8 @@ let gameRunning = false;
 let level = 0;
 let linesClearedTotal = 0;
 
-highScoreModule.load();
-highScoreModule.display();
+highScore = new HighScore({storageKey: 'tetrisHighScore', htmlElementId: 'highScore'});
+highScore.init();
 
 const player = {
     pos: {x: 0, y: 0},
@@ -319,7 +319,7 @@ function playerReset() {
         gameOver = true;
         gameRunning = false; // Stop the game loop
         showGameOver();
-        highScoreModule.update(player.score);
+        highScore.update(player.score);
     }
 }
 

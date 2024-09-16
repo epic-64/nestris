@@ -1,15 +1,31 @@
-const highScoreModule = {
-    highScore: 0,
-    storageKey: 'highScore',
+class HighScore {
+    constructor({storageKey, htmlElementId}) {
+        console.log('HighScore constructor')
+        console.log(storageKey)
+        console.log(htmlElementId)
+
+        this.highScore = 0
+        this.storageKey = storageKey
+        this.htmlElementId = htmlElementId
+    }
+
+    init() {
+        this.load();
+        this.display();
+    }
+
     load() {
-        this.highScore = localStorage.getItem(this.storageKey) || 0;
-    },
+        this.highScore = window.localStorage.getItem(this.storageKey) || 0
+    }
+
     save() {
-        localStorage.setItem(this.storageKey, this.highScore);
-    },
+        window.localStorage.setItem(this.storageKey, this.highScore);
+    }
+
     display() {
-        document.getElementById(this.storageKey).innerText = 'High Score: ' + this.highScore;
-    },
+        // window.document.getElementById(this.htmlElementId).innerText = 'High Score: ' + this.highScore;
+    }
+
     update(score) {
         if (score > this.highScore) {
             this.highScore = score;
