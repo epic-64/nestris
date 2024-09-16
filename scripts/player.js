@@ -51,8 +51,8 @@ class Player {
             (this.matrix[0].length / 2 | 0);
 
         if (collide(arena, this)) {
-            gameOver = true;
-            gameRunning = false;
+            gameState.gameOver = true;
+            gameState.gameRunning = false;
             showGameOver();
             highScore.update(this.score);
         }

@@ -1,6 +1,3 @@
-let level = 0;
-let linesClearedTotal = 0;
-
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 context.scale(20, 20);
@@ -53,7 +50,7 @@ const tetrominoes = {
     ],
 };
 
-// Frames per drop for each level (assuming 60 FPS)
+// Frames per drop for each gameState.level (assuming 60 FPS)
 const framesPerDropTable = {
     0: 48,
     1: 43,
@@ -143,9 +140,9 @@ function arenaSweep() {
             });
 
             let points = [0, 40, 100, 300, 1200];
-            player.score += points[linesCleared.length] * (level + 1);
-            linesClearedTotal += linesCleared.length;
-            level = Math.min(10, startLevel + Math.floor(linesClearedTotal / 10));
+            player.score += points[linesCleared.length] * (gameState.level + 1);
+            gameState.linesClearedTotal += linesCleared.length;
+            gameState.level = Math.min(10, gameState.startLevel + Math.floor(gameState.linesClearedTotal / 10));
             updateLevel();
             gameState.animating = false;
 
@@ -308,11 +305,11 @@ function update() {
 }
 
 function updateScoreDisplay() {
-    document.getElementById('score').innerText = 'Score: ' + player.score + ' | Level: ' + level;
+    document.getElementById('score').innerText = 'Score: ' + player.score + ' | level: ' + gameState.level;
 }
 
 function updateLevel() {
-    gameState.framesPerDrop = getFramesPerDrop(level);
+    gameState.framesPerDrop = getFramesPerDrop(gameState.level);
     framesPerSoftDrop = Math.max(1, Math.min(Math.floor(gameState.framesPerDrop * softDropSpeedMultiplier), 5));
     keyState = {};
     updateScoreDisplay();
@@ -320,7 +317,7 @@ function updateLevel() {
 }
 
 function getFramesPerDrop(level) {
-    return framesPerDropTable[level] || 5; // Default to 5 frames if level exceeds defined levels
+    return framesPerDropTable[gameState.level] || 1;
 }
 
 function handleInput() {
@@ -395,7 +392,7 @@ function resetGame() {
     keyState = {};
 
     // Reset lines cleared total
-    linesClearedTotal = 0;
+    gameState.linesClearedTotal = 0;
 
     // Clear the arena
     arena.forEach(row => row.fill(0));
@@ -435,7 +432,7 @@ function startGame() {
     keyState = {};
 
     // Reset lines cleared total
-    linesClearedTotal = 0;
+    gameState.linesClearedTotal = 0;
 
     // Clear the arena
     arena.forEach(row => row.fill(0));
@@ -462,13 +459,12 @@ document.getElementById('restartButton').addEventListener('click', () => {
     resetGame();
 });
 
-let startLevel = 0;
 document.getElementById('startGameButton').addEventListener('click', () => {
-    startLevel = parseInt(document.getElementById('startLevelInput').value);
-    if (isNaN(startLevel) || startLevel < 0 || startLevel > 10) {
-        startLevel = 0;
+    gameState.startLevel = parseInt(document.getElementById('startLevelInput').value);
+    if (isNaN(gameState.startLevel) || gameState.startLevel < 0) {
+        gameState.startLevel = 0;
     }
-    level = startLevel;
+    gameState.level = gameState.startLevel;
     updateLevel();
     document.getElementById('levelSelectionOverlay').style.display = 'none';
 
@@ -480,11 +476,11 @@ document.getElementById('levelSelectionOverlay').style.display = 'flex';
 
 // Debug Information Function
 function updateDebugDisplay() {
-    const framesPerDropValue = framesPerDropTable[level] || 5;
+    const framesPerDropValue = framesPerDropTable[gameState.level] || 5;
     document.getElementById('debugInfo').innerHTML = `
                 <strong>Debug Info:</strong><br>
-                Level: ${level}<br>
-                Lines Cleared: ${linesClearedTotal}<br>
+                level: ${gameState.level}<br>
+                Lines Cleared: ${gameState.linesClearedTotal}<br>
                 Frames Per Drop: ${framesPerDropValue}<br>
                 Frames Per Soft Drop: ${framesPerSoftDrop}
             `;

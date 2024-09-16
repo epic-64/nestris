@@ -11,6 +11,7 @@ class GameState {
     gameRunning = false;
     level = 0;
     linesClearedTotal = 0;
+    startLevel = 0;
 
     colors = [
         null,
