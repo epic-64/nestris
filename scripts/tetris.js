@@ -1,6 +1,6 @@
 const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
-context.scale(20, 20);
+const canvasContext = canvas.getContext('2d');
+canvasContext.scale(20, 20);
 
 const soundModule = new SoundModule(new AudioContext());
 const gameState = new GameState();
@@ -12,214 +12,12 @@ const highScore = new HighScore({
 });
 highScore.init();
 
-const tetrominoes = {
-    'T': [
-        [0, 0, 0],
-        [1, 1, 1],
-        [0, 1, 0],
-    ],
-    'O': [
-        [2, 2],
-        [2, 2],
-    ],
-    'L': [
-        [0, 3, 0],
-        [0, 3, 0],
-        [0, 3, 3],
-    ],
-    'J': [
-        [0, 4, 0],
-        [0, 4, 0],
-        [4, 4, 0],
-    ],
-    'I': [
-        [0, 5, 0, 0],
-        [0, 5, 0, 0],
-        [0, 5, 0, 0],
-        [0, 5, 0, 0],
-    ],
-    'S': [
-        [0, 6, 6],
-        [6, 6, 0],
-        [0, 0, 0],
-    ],
-    'Z': [
-        [7, 7, 0],
-        [0, 7, 7],
-        [0, 0, 0],
-    ],
-};
-
-// Frames per drop for each gameState.level (assuming 60 FPS)
-const framesPerDropTable = {
-    0: 48,
-    1: 43,
-    2: 38,
-    3: 33,
-    4: 28,
-    5: 23,
-    6: 18,
-    7: 13,
-    8: 8,
-    9: 6,
-    10: 5,
-};
-
-function createMatrix(w, h) {
-    const matrix = [];
-    while (h--) {
-        matrix.push(new Array(w).fill(0));
-    }
-    return matrix;
-}
-
-function merge(arena, player) {
-    player.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                arena[y + player.pos.y][x + player.pos.x] = value;
-            }
-        });
-    });
-}
-
-function collide(arena, player) {
-    const m = player.matrix;
-    const o = player.pos;
-    for (let y = 0; y < m.length; ++y) {
-        for (let x = 0; x < m[y].length; ++x) {
-            if (m[y][x] !== 0 &&
-                (arena[y + o.y] &&
-                    arena[y + o.y][x + o.x]) !== 0) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-function rotate(matrix, dir) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y; ++x) {
-            [
-                matrix[x][y],
-                matrix[y][x],
-            ] = [
-                matrix[y][x],
-                matrix[x][y],
-            ];
-        }
-    }
-
-    if (dir > 0) {
-        matrix.forEach(row => row.reverse());
-    } else {
-        matrix.reverse();
-    }
-}
-
-function arenaSweep() {
-    let linesCleared = [];
-    outer: for (let y = arena.length - 1; y >= 0; --y) {
-        for (let x = 0; x < arena[y].length; ++x) {
-            if (arena[y][x] === 0) {
-                continue outer;
-            }
-        }
-        linesCleared.unshift(y);
-    }
-
-    if (linesCleared.length > 0) {
-        soundModule.playLineClearSound(linesCleared.length);
-        gameState.animating = true;
-        animateLineClear(linesCleared, () => {
-            // After animation, remove the lines and update the score
-            linesCleared.forEach(y => {
-                arena.splice(y, 1);
-                arena.unshift(new Array(arena[0].length).fill(0));
-            });
-
-            let points = [0, 40, 100, 300, 1200];
-            player.score += points[linesCleared.length] * (gameState.level + 1);
-            gameState.linesClearedTotal += linesCleared.length;
-            gameState.level = Math.min(10, gameState.startLevel + Math.floor(gameState.linesClearedTotal / 10));
-            updateLevel();
-            gameState.animating = false;
-
-            // Reset frame count after line clear
-            gameState.framesSinceLastDrop = 0;
-
-            // Update debug info
-            updateDebugDisplay();
-        });
-    }
-}
-
-function animateLineClear(linesCleared, callback) {
-    gameState.paused = true;
-
-    let cellsToAnimate = [];
-
-    // Collect cells to light up (bottom to top, left to right)
-    for (let y of linesCleared) {
-        for (let x = 0; x < arena[y].length; x++) {
-            let value = arena[y][x];
-            cellsToAnimate.push({x, y, value});
-        }
-    }
-
-    // Collect cells to delete (top to bottom, right to left)
-    let cellsToDelete = [];
-    for (let y of linesCleared.slice().reverse()) {
-        for (let x = arena[y].length - 1; x >= 0; x--) {
-            cellsToDelete.push({x, y});
-        }
-    }
-
-    const perCellDuration = 20; // milliseconds per cell
-
-    let currentStep = 0;
-
-    function animateLighting() {
-        if (currentStep < cellsToAnimate.length) {
-            const cell = cellsToAnimate[currentStep];
-            draw(); // Redraw arena and player
-
-            // Draw lit-up cell
-            context.fillStyle = getBrightColor(cell.value);
-            context.fillRect(cell.x, cell.y, 1, 1);
-
-            currentStep++;
-            setTimeout(animateLighting, perCellDuration);
-        } else {
-            currentStep = 0;
-            setTimeout(animateDeletion, perCellDuration);
-        }
-    }
-
-    function animateDeletion() {
-        if (currentStep < cellsToDelete.length) {
-            const cell = cellsToDelete[currentStep];
-            arena[cell.y][cell.x] = 0;
-            draw(); // Redraw arena and player
-            currentStep++;
-            setTimeout(animateDeletion, perCellDuration);
-        } else {
-            gameState.paused = false;
-            gameState.framesSinceLastDrop = 0; // Reset frame count after animation
-            callback();
-        }
-    }
-
-    animateLighting();
-}
-
 function drawMatrix(matrix, offset) {
     matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                context.fillStyle = getColor(value);
-                context.fillRect(x + offset.x,
+                canvasContext.fillStyle = getColor(value);
+                canvasContext.fillRect(x + offset.x,
                     y + offset.y,
                     1, 1);
             }
@@ -228,8 +26,8 @@ function drawMatrix(matrix, offset) {
 }
 
 function draw() {
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    canvasContext.fillStyle = '#000';
+    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
     drawMatrix(arena, {x: 0, y: 0});
     drawMatrix(player.matrix, player.pos);
@@ -243,39 +41,16 @@ function getBrightColor(value) {
     return gameState.brightColors[value];
 }
 
-function playerReset() {
-    const pieces = 'TJLOSZI';
-    player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
-    player.pos.y = 0;
-    player.pos.x = (arena[0].length / 2 | 0) -
-        (player.matrix[0].length / 2 | 0);
-    if (collide(arena, player)) {
-        gameState.gameOver = true;
-        gameState.gameRunning = false; // Stop the game loop
-        showGameOver();
-        highScore.update(player.score);
-    }
-}
-
-function createPiece(type) {
-    return tetrominoes[type];
-}
-
-// Soft Drop Variables
-let softDropFrameCount = 0;
-const softDropSpeedMultiplier = 0.5; // Adjust this value for desired soft drop speed (0 < multiplier <= 1)
-let framesPerSoftDrop = null;
-
 function isSoftDropping(keyState) {
-    return keyState['ArrowDown'];
+    return gameState.keyState['ArrowDown'];
 }
 
 function handeSoftDrop() {
-    softDropFrameCount++;
+    gameState.softDropFrameCount++;
 
-    if (softDropFrameCount >= framesPerSoftDrop) {
+    if (gameState.softDropFrameCount >= gameState.framesPerSoftDrop) {
         player.drop(arena);
-        softDropFrameCount = 0;
+        gameState.softDropFrameCount = 0;
         gameState.framesSinceLastDrop = 0; // Reset normal drop counter when soft dropping
     }
 }
@@ -286,10 +61,10 @@ function update() {
     if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
         gameState.framesSinceLastDrop++;
 
-        if (isSoftDropping(keyState)) {
+        if (isSoftDropping(gameState.keyState)) {
             handeSoftDrop();
         } else {
-            softDropFrameCount = 0;
+            gameState.softDropFrameCount = 0;
 
             if (gameState.framesSinceLastDrop >= gameState.framesPerDrop) {
                 player.drop(arena);
@@ -310,19 +85,19 @@ function updateScoreDisplay() {
 
 function updateLevel() {
     gameState.framesPerDrop = getFramesPerDrop(gameState.level);
-    framesPerSoftDrop = Math.max(1, Math.min(Math.floor(gameState.framesPerDrop * softDropSpeedMultiplier), 5));
-    keyState = {};
+    gameState.framesPerSoftDrop = Math.max(1, Math.min(Math.floor(gameState.framesPerDrop * gameState.softDropSpeedMultiplier), 5));
+    gameState.keyState = {};
     updateScoreDisplay();
     updateDebugDisplay();
 }
 
 function getFramesPerDrop(level) {
-    return framesPerDropTable[gameState.level] || 1;
+    return gameState.framesPerDropTable[gameState.level] || 1;
 }
 
 function handleInput() {
     // Move Left
-    if (keyState['ArrowLeft']) {
+    if (gameState.keyState['ArrowLeft']) {
         moveFrameCount++;
         if (moveFrameCount >= moveFrameInterval) {
             player.move(-1, arena);
@@ -331,7 +106,7 @@ function handleInput() {
     }
 
     // Move Right
-    else if (keyState['ArrowRight']) {
+    else if (gameState.keyState['ArrowRight']) {
         moveFrameCount++;
         if (moveFrameCount >= moveFrameInterval) {
             player.move(1, arena);
@@ -341,9 +116,6 @@ function handleInput() {
         moveFrameCount = moveFrameInterval; // Reset to allow immediate move on next key press
     }
 }
-
-// Key state map to track which keys are pressed
-let keyState = {};
 
 // Handle keydown events
 document.addEventListener('keydown', event => {
@@ -359,7 +131,7 @@ document.addEventListener('keydown', event => {
                 handleInput();
             }
         }
-        keyState[event.code] = true;
+        gameState.keyState[event.code] = true;
     }
     if (event.code === 'Escape') { // Escape key to toggle pause
         if (!gameState.animating && !gameState.gameOver) {
@@ -371,7 +143,7 @@ document.addEventListener('keydown', event => {
 // Handle keyup events
 document.addEventListener('keyup', event => {
     if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
-        keyState[event.code] = false;
+        gameState.keyState[event.code] = false;
     }
 });
 
@@ -389,7 +161,7 @@ function resetGame() {
     updateScoreDisplay();
 
     // Reset key states
-    keyState = {};
+    gameState.keyState = {};
 
     // Reset lines cleared total
     gameState.linesClearedTotal = 0;
@@ -416,7 +188,7 @@ function togglePause() {
 
         // Reset frame counters to prevent jumps
         gameState.framesSinceLastDrop = 0;
-        softDropFrameCount = 0;
+        gameState.softDropFrameCount = 0;
         moveFrameCount = moveFrameInterval;
     }
 }
@@ -425,11 +197,11 @@ function togglePause() {
 function startGame() {
     // Reset frame counters
     gameState.framesSinceLastDrop = 0;
-    softDropFrameCount = 0;
+    gameState.softDropFrameCount = 0;
     moveFrameCount = moveFrameInterval;
 
     // Reset key states
-    keyState = {};
+    gameState.keyState = {};
 
     // Reset lines cleared total
     gameState.linesClearedTotal = 0;
@@ -476,13 +248,14 @@ document.getElementById('levelSelectionOverlay').style.display = 'flex';
 
 // Debug Information Function
 function updateDebugDisplay() {
-    const framesPerDropValue = framesPerDropTable[gameState.level] || 5;
+    const framesPerDropValue = gameState.framesPerDropTable[gameState.level] || 1;
+
     document.getElementById('debugInfo').innerHTML = `
                 <strong>Debug Info:</strong><br>
                 level: ${gameState.level}<br>
                 Lines Cleared: ${gameState.linesClearedTotal}<br>
                 Frames Per Drop: ${framesPerDropValue}<br>
-                Frames Per Soft Drop: ${framesPerSoftDrop}
+                Frames Per Soft Drop: ${gameState.framesPerSoftDrop}
             `;
 }
 

@@ -9,9 +9,15 @@ class GameState {
     animating = false;
     gameOver = false;
     gameRunning = false;
+    startLevel = 0;
     level = 0;
     linesClearedTotal = 0;
-    startLevel = 0;
+
+    softDropFrameCount = 0;
+    softDropSpeedMultiplier = 0.5;
+    framesPerSoftDrop = 1;
+
+    keyState = {};
 
     colors = [
         null,
@@ -34,4 +40,19 @@ class GameState {
         '#FFEB70', // Brighter S
         '#709AFF', // Brighter Z
     ];
+
+    // Frames per drop for each gameState.level (assuming 60 FPS)
+    framesPerDropTable = {
+        0: 48,
+        1: 43,
+        2: 38,
+        3: 33,
+        4: 28,
+        5: 23,
+        6: 18,
+        7: 13,
+        8: 8,
+        9: 6,
+        10: 5,
+    };
 }
