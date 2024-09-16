@@ -1,51 +1,19 @@
-const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
-
-context.scale(20, 20);
-
-const arena = createMatrix(10, 20);
-let framesSinceLastDrop = 0;
-let framesPerDrop = 48;
-let paused = false;
-let animating = false;
-let gameOver = false;
-let gameRunning = false;
 let level = 0;
 let linesClearedTotal = 0;
 
-highScore = new HighScore({
+const canvas = document.getElementById('gameCanvas');
+const context = canvas.getContext('2d');
+context.scale(20, 20);
+
+const soundModule = new SoundModule(new AudioContext());
+const gameState = new GameState();
+const arena = createMatrix(10, 20);
+const player = new Player();
+const highScore = new HighScore({
     storageKey: 'tetrisHighScore',
     htmlElement: window.document.getElementById('high-score-inner')
 });
 highScore.init();
-
-const player = {
-    pos: {x: 0, y: 0},
-    matrix: null,
-    score: 0
-};
-
-const colors = [
-    null,
-    '#FF0D72', // Tetromino T
-    '#0DC2FF', // Tetromino O
-    '#0DFF72', // Tetromino L
-    '#F538FF', // Tetromino J
-    '#FF8E0D', // Tetromino I
-    '#FFE138', // Tetromino S
-    '#3877FF', // Tetromino Z
-];
-
-const brightColors = [
-    null,
-    '#FF5A9D', // Brighter T
-    '#4DDCFF', // Brighter O
-    '#4DFF9F', // Brighter L
-    '#FF7AFF', // Brighter J
-    '#FFAC4D', // Brighter I
-    '#FFEB70', // Brighter S
-    '#709AFF', // Brighter Z
-];
 
 const tetrominoes = {
     'T': [
@@ -99,22 +67,6 @@ const framesPerDropTable = {
     9: 6,
     10: 5,
 };
-
-function playPieceLockSound() {
-    soundModule.playSound([150], [0.1]);
-}
-
-function playLineClearSound(linesCleared) {
-    if (linesCleared === 1) {
-        soundModule.playSound([200, 250], [0.1, 0.1]);
-    } else if (linesCleared === 2) {
-        soundModule.playSound([250, 300, 350], [0.1, 0.1, 0.1]);
-    } else if (linesCleared === 3) {
-        soundModule.playSound([300, 350, 400, 450], [0.1, 0.1, 0.1, 0.1]);
-    } else if (linesCleared === 4) {
-        soundModule.playSound([440, 550, 660, 880], [0.15, 0.15, 0.15, 0.15]);
-    }
-}
 
 function createMatrix(w, h) {
     const matrix = [];
@@ -181,8 +133,8 @@ function arenaSweep() {
     }
 
     if (linesCleared.length > 0) {
-        playLineClearSound(linesCleared.length);
-        animating = true;
+        soundModule.playLineClearSound(linesCleared.length);
+        gameState.animating = true;
         animateLineClear(linesCleared, () => {
             // After animation, remove the lines and update the score
             linesCleared.forEach(y => {
@@ -195,10 +147,10 @@ function arenaSweep() {
             linesClearedTotal += linesCleared.length;
             level = Math.min(10, startLevel + Math.floor(linesClearedTotal / 10));
             updateLevel();
-            animating = false;
+            gameState.animating = false;
 
             // Reset frame count after line clear
-            framesSinceLastDrop = 0;
+            gameState.framesSinceLastDrop = 0;
 
             // Update debug info
             updateDebugDisplay();
@@ -207,7 +159,7 @@ function arenaSweep() {
 }
 
 function animateLineClear(linesCleared, callback) {
-    paused = true;
+    gameState.paused = true;
 
     let cellsToAnimate = [];
 
@@ -256,8 +208,8 @@ function animateLineClear(linesCleared, callback) {
             currentStep++;
             setTimeout(animateDeletion, perCellDuration);
         } else {
-            paused = false;
-            framesSinceLastDrop = 0; // Reset frame count after animation
+            gameState.paused = false;
+            gameState.framesSinceLastDrop = 0; // Reset frame count after animation
             callback();
         }
     }
@@ -287,29 +239,11 @@ function draw() {
 }
 
 function getColor(value) {
-    return colors[value];
+    return gameState.colors[value];
 }
 
 function getBrightColor(value) {
-    return brightColors[value];
-}
-
-function playerDrop() {
-    player.pos.y++;
-    if (collide(arena, player)) {
-        player.pos.y--;
-        merge(arena, player);
-        playPieceLockSound();
-        playerReset();
-        arenaSweep();
-    }
-}
-
-function playerMove(dir) {
-    player.pos.x += dir;
-    if (collide(arena, player)) {
-        player.pos.x -= dir;
-    }
+    return gameState.brightColors[value];
 }
 
 function playerReset() {
@@ -319,8 +253,8 @@ function playerReset() {
     player.pos.x = (arena[0].length / 2 | 0) -
         (player.matrix[0].length / 2 | 0);
     if (collide(arena, player)) {
-        gameOver = true;
-        gameRunning = false; // Stop the game loop
+        gameState.gameOver = true;
+        gameState.gameRunning = false; // Stop the game loop
         showGameOver();
         highScore.update(player.score);
     }
@@ -343,26 +277,26 @@ function handeSoftDrop() {
     softDropFrameCount++;
 
     if (softDropFrameCount >= framesPerSoftDrop) {
-        playerDrop();
+        player.drop(arena);
         softDropFrameCount = 0;
-        framesSinceLastDrop = 0; // Reset normal drop counter when soft dropping
+        gameState.framesSinceLastDrop = 0; // Reset normal drop counter when soft dropping
     }
 }
 
 function update() {
-    if (!gameRunning) return;
+    if (!gameState.gameRunning) return;
 
-    if (!paused && !animating && !gameOver) {
-        framesSinceLastDrop++;
+    if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
+        gameState.framesSinceLastDrop++;
 
         if (isSoftDropping(keyState)) {
             handeSoftDrop();
         } else {
             softDropFrameCount = 0;
 
-            if (framesSinceLastDrop >= framesPerDrop) {
-                playerDrop();
-                framesSinceLastDrop = 0;
+            if (gameState.framesSinceLastDrop >= gameState.framesPerDrop) {
+                player.drop(arena);
+                gameState.framesSinceLastDrop = 0;
             }
         }
 
@@ -378,8 +312,8 @@ function updateScoreDisplay() {
 }
 
 function updateLevel() {
-    framesPerDrop = getFramesPerDrop(level);
-    framesPerSoftDrop = Math.max(1, Math.min(Math.floor(framesPerDrop * softDropSpeedMultiplier), 5));
+    gameState.framesPerDrop = getFramesPerDrop(level);
+    framesPerSoftDrop = Math.max(1, Math.min(Math.floor(gameState.framesPerDrop * softDropSpeedMultiplier), 5));
     keyState = {};
     updateScoreDisplay();
     updateDebugDisplay();
@@ -394,7 +328,7 @@ function handleInput() {
     if (keyState['ArrowLeft']) {
         moveFrameCount++;
         if (moveFrameCount >= moveFrameInterval) {
-            playerMove(-1);
+            player.move(-1, arena);
             moveFrameCount = 0;
         }
     }
@@ -403,7 +337,7 @@ function handleInput() {
     else if (keyState['ArrowRight']) {
         moveFrameCount++;
         if (moveFrameCount >= moveFrameInterval) {
-            playerMove(1);
+            player.move(1, arena);
             moveFrameCount = 0;
         }
     } else {
@@ -416,13 +350,13 @@ let keyState = {};
 
 // Handle keydown events
 document.addEventListener('keydown', event => {
-    if (!paused && !animating && !gameOver) {
+    if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
         if (!event.repeat) {
             // Process rotations on keydown, ignoring repeats
-            if (event.code === 'KeyQ') {
-                playerRotate(-1);
-            } else if (event.code === 'KeyW' || event.code === 'ArrowUp') {
-                playerRotate(1);
+            if (event.code === 'KeyA') {
+                player.rotate(-1, arena);
+            } else if (event.code === 'KeyD') {
+                player.rotate(1, arena);
             } else if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
                 moveFrameCount = moveFrameInterval; // Allow immediate move
                 handleInput();
@@ -431,7 +365,7 @@ document.addEventListener('keydown', event => {
         keyState[event.code] = true;
     }
     if (event.code === 'Escape') { // Escape key to toggle pause
-        if (!animating && !gameOver) {
+        if (!gameState.animating && !gameState.gameOver) {
             togglePause();
         }
     }
@@ -439,7 +373,7 @@ document.addEventListener('keydown', event => {
 
 // Handle keyup events
 document.addEventListener('keyup', event => {
-    if (!paused && !animating && !gameOver) {
+    if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
         keyState[event.code] = false;
     }
 });
@@ -448,26 +382,11 @@ document.addEventListener('keyup', event => {
 let moveFrameCount = 0;
 const moveFrameInterval = 10; // Frames between moves (adjust for desired speed)
 
-function playerRotate(dir) {
-    const pos = player.pos.x;
-    let offset = 1;
-    rotate(player.matrix, dir);
-    while (collide(arena, player)) {
-        player.pos.x += offset;
-        offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) {
-            rotate(player.matrix, -dir);
-            player.pos.x = pos;
-            return;
-        }
-    }
-}
-
 function resetGame() {
     player.score = 0;
-    gameOver = false;
-    paused = false;
-    gameRunning = false; // Stop the game loop
+    gameState.gameOver = false;
+    gameState.paused = false;
+    gameState.gameRunning = false; // Stop the game loop
     document.getElementById('gameOverOverlay').style.display = 'none';
     document.getElementById('levelSelectionOverlay').style.display = 'flex';
     updateScoreDisplay();
@@ -491,15 +410,15 @@ function showGameOver() {
 }
 
 function togglePause() {
-    paused = !paused;
+    gameState.paused = !gameState.paused;
     const pauseOverlay = document.getElementById('pauseOverlay');
-    if (paused) {
+    if (gameState.paused) {
         pauseOverlay.style.display = 'flex';
     } else {
         pauseOverlay.style.display = 'none';
 
         // Reset frame counters to prevent jumps
-        framesSinceLastDrop = 0;
+        gameState.framesSinceLastDrop = 0;
         softDropFrameCount = 0;
         moveFrameCount = moveFrameInterval;
     }
@@ -508,7 +427,7 @@ function togglePause() {
 // Start the game only after the first piece is generated
 function startGame() {
     // Reset frame counters
-    framesSinceLastDrop = 0;
+    gameState.framesSinceLastDrop = 0;
     softDropFrameCount = 0;
     moveFrameCount = moveFrameInterval;
 
@@ -522,10 +441,10 @@ function startGame() {
     arena.forEach(row => row.fill(0));
 
     // Initialize the player's piece
-    playerReset();
+    player.reset(arena);
 
-    // Set gameRunning to true
-    gameRunning = true;
+    // Set gameState.gameRunning to true
+    gameState.gameRunning = true;
 
     updateLevel();
     updateDebugDisplay();
@@ -534,7 +453,7 @@ function startGame() {
 }
 
 document.getElementById('pauseButton').addEventListener('click', () => {
-    if (!animating && !gameOver) {
+    if (!gameState.animating && !gameState.gameOver) {
         togglePause();
     }
 });
