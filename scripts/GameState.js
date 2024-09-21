@@ -55,4 +55,12 @@ class GameState {
         9: 6,
         10: 5,
     };
+
+    pause() {
+        this.paused = true;
+    }
+
+    unpause() {
+        this.paused = false;
+    }
 }

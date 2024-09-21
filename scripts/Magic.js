@@ -36,7 +36,7 @@ function arenaSweep() {
 }
 
 function animateLineClear(linesCleared, callback) {
-    gameState.paused = true;
+    gameState.pause()
 
     let cellsToAnimate = [];
 
@@ -81,11 +81,11 @@ function animateLineClear(linesCleared, callback) {
         if (currentStep < cellsToDelete.length) {
             const cell = cellsToDelete[currentStep];
             arena[cell.y][cell.x] = 0;
-            draw(); // Redraw arena and player
+            draw();
             currentStep++;
             setTimeout(animateDeletion, perCellDuration);
         } else {
-            gameState.paused = false;
+            gameState.unpause();
             gameState.framesSinceLastDrop = 0; // Reset frame count after animation
             callback();
         }

@@ -45,7 +45,7 @@ function isSoftDropping(keyState) {
     return gameState.keyState['ArrowDown'];
 }
 
-function handeSoftDrop() {
+function handleSoftDrop() {
     gameState.softDropFrameCount++;
 
     if (gameState.softDropFrameCount >= gameState.framesPerSoftDrop) {
@@ -62,7 +62,7 @@ function update() {
         gameState.framesSinceLastDrop++;
 
         if (isSoftDropping(gameState.keyState)) {
-            handeSoftDrop();
+            handleSoftDrop();
         } else {
             gameState.softDropFrameCount = 0;
 
