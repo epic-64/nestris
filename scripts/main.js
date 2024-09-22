@@ -17,6 +17,8 @@ const highScore = new HighScore({
 });
 highScore.init();
 
+const animate = new Animate({gameState: gameState});
+
 const tetrisGame = new TetrisGame({
     gameState: gameState
 });
