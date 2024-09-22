@@ -30,7 +30,7 @@ function arenaSweep() {
             gameState.framesSinceLastDrop = 0;
 
             // Update debug info
-            updateDebugDisplay();
+            gameDisplay.updateDebugDisplay();
         });
     }
 }

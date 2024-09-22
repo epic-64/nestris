@@ -51,7 +51,8 @@ class Player {
         const pieces = 'TJLOSZI';
         this.matrix = matrixService.createPiece(pieces[pieces.length * Math.random() | 0]);
         this.pos.y = 0;
-        this.pos.x = (arena[0].length / 2 | 0) -
+        this.pos.x =
+            (arena[0].length / 2 | 0) -
             (this.matrix[0].length / 2 | 0);
 
         if (matrixService.collide(arena, this)) {
