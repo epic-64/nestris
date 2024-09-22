@@ -235,7 +235,7 @@ class TetrisGame {
                 let points = [0, 40, 100, 300, 1200];
                 this.gameState.score += points[linesCleared.length] * (this.gameState.level + 1);
                 this.gameState.linesClearedTotal += linesCleared.length;
-                this.gameState.level = Math.min(10, this.gameState.startLevel + Math.floor(this.gameState.linesClearedTotal / 10));
+                this.gameState.level = Math.min(10, gameState.startLevel + Math.floor(this.gameState.linesClearedTotal / 10));
                 tetrisGame.updateLevel();
                 this.gameState.animating = false;
 
@@ -279,7 +279,7 @@ class TetrisGame {
                 tetrisGame.draw(); // Redraw arena and player
 
                 // Draw lit-up cell
-                arenaContext.fillStyle = this.gameState.getBrightColor(cell.value);
+                arenaContext.fillStyle = gameState.getBrightColor(cell.value);
                 arenaContext.fillRect(cell.x, cell.y, 1, 1);
 
                 currentStep++;
@@ -298,8 +298,8 @@ class TetrisGame {
                 currentStep++;
                 setTimeout(animateDeletion, perCellDuration);
             } else {
-                this.gameState.unpause();
-                this.gameState.framesSinceLastDrop = 0; // Reset frame count after animation
+                gameState.unpause();
+                gameState.framesSinceLastDrop = 0; // Reset frame count after animation
                 callback();
             }
         }
