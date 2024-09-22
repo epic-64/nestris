@@ -66,8 +66,8 @@ function animateLineClear(linesCleared, callback) {
             tetrisGame.draw(); // Redraw arena and player
 
             // Draw lit-up cell
-            canvasContext.fillStyle = gameState.getBrightColor(cell.value);
-            canvasContext.fillRect(cell.x, cell.y, 1, 1);
+            arenaContext.fillStyle = gameState.getBrightColor(cell.value);
+            arenaContext.fillRect(cell.x, cell.y, 1, 1);
 
             currentStep++;
             setTimeout(animateLighting, perCellDuration);

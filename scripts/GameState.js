@@ -21,6 +21,7 @@ class GameState {
     softDropFrameCount = 0;
     softDropSpeedMultiplier = 0.5;
     framesPerSoftDrop = 1;
+    softDropLock = false;
 
     // movement delays
     moveFrameCount = 0;
@@ -101,7 +102,7 @@ class GameState {
     }
 
     isSoftDropping() {
-        return this.keyState['ArrowDown'];
+        return !this.softDropLock && this.keyState['ArrowDown'];
     }
 
     handleSoftDrop(player, arena) {

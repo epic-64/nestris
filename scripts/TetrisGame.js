@@ -1,6 +1,6 @@
 class TetrisGame {
     constructor() {
-
+        this.nextPiece = this.getNewNextPiece();
     }
 
     showGameOver() {
@@ -118,6 +118,8 @@ class TetrisGame {
         if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
             gameState.keyState[event.code] = false;
         }
+
+        gameState.softDropLock = false;
     }
 
     handleHorizontalInput() {
@@ -142,10 +144,43 @@ class TetrisGame {
     }
 
     draw() {
-        canvasContext.fillStyle = '#000';
-        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+        arenaContext.fillStyle = '#000';
+        arenaContext.fillRect(0, 0, arenaCanvas.width, arenaCanvas.height);
 
-        matrixService.drawMatrix(arena, {x: 0, y: 0});
-        matrixService.drawMatrix(player.matrix, player.pos);
+        matrixService.drawMatrix(arenaContext, arena, {x: 0, y: 0});
+        matrixService.drawMatrix(arenaContext, player.matrix, player.pos);
+
+        nextPieceContext.fillStyle = '#000';
+        nextPieceContext.fillRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+
+        matrixService.drawMatrix(nextPieceContext, this.nextPiece.matrix, {x: 1, y: 1});
+    }
+
+    getNewPieceMatrix() {
+        const letters = 'TJLOSZI';
+
+        // new piece is the next piece
+        let newPiece =  this.nextPiece;
+
+        // create a new next piece (for the future)
+        this.nextPiece = this.getNewNextPiece();
+
+        // if the next piece is the same as last time, generate a new one (once)
+        if (this.nextPiece.letter === newPiece.letter) {
+            this.nextPiece = this.getNewNextPiece();
+        }
+
+        return newPiece.matrix;
+    }
+
+    getNewNextPiece() {
+        const letters = 'TJLOSZI';
+
+        let newLetter = letters[letters.length * Math.random() | 0];
+
+        return {
+            letter: newLetter,
+            matrix: matrixService.createPiece(newLetter)
+        };
     }
 }

@@ -16,22 +16,18 @@ class Player {
     }
 
     rotate(dir, arena) {
-        const pos = this.pos.x;
-        let offset = 1;
+        // Rotate the piece
         matrixService.rotate(this.matrix, dir);
 
-        soundModule.playRotationSound();
-
-        while (matrixService.collide(arena, this)) {
-            this.pos.x += offset;
-            offset = -(offset + (offset > 0 ? 1 : -1));
-
-            if (offset > this.matrix[0].length) {
-                matrixService.rotate(this.matrix, -dir);
-                this.pos.x = pos;
-
-                return;
-            }
+        // Check for collision
+        if (matrixService.collide(arena, this)) {
+            // Undo the rotation
+            matrixService.rotate(this.matrix, -dir);
+            // Optionally, play a different sound or no sound
+            soundModule.playFailedRotationSound();
+        } else {
+            // Play rotation sound only if rotation is successful
+            soundModule.playRotationSound();
         }
     }
 
@@ -42,14 +38,16 @@ class Player {
             this.pos.y--;
             matrixService.merge(arena, this);
             soundModule.playPieceLockSound();
+
+            gameState.softDropLock = true; // interrupt soft drop when piece locks
             this.reset(arena);
             arenaSweep();
         }
     }
 
     reset(arena) {
-        const pieces = 'TJLOSZI';
-        this.matrix = matrixService.createPiece(pieces[pieces.length * Math.random() | 0]);
+        this.matrix = tetrisGame.getNewPieceMatrix();
+
         this.pos.y = 0;
         this.pos.x =
             (arena[0].length / 2 | 0) -

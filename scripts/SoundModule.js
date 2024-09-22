@@ -28,7 +28,7 @@ class SoundModule
     }
 
     playPieceLockSound() {
-        this.playSound([150], [0.1]);
+        this.playSound([100], [0.1]);
     }
 
     playLineClearSound(linesCleared) {
@@ -44,11 +44,15 @@ class SoundModule
     }
 
     playMovementSound() {
-        this.playSound([100], [0.1]);
+        this.playSound([150], [0.1]);
     }
 
     playRotationSound() {
         this.playSound([200], [0.1]);
+    }
+
+    playFailedRotationSound() {
+        this.playSound([150, 140], [0.15, 0.15]);
     }
 }
 

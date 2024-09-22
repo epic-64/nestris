@@ -1,6 +1,10 @@
-const canvas = document.getElementById('gameCanvas');
-const canvasContext = canvas.getContext('2d');
-canvasContext.scale(20, 20);
+const arenaCanvas = document.getElementById('gameCanvas');
+const arenaContext = arenaCanvas.getContext('2d');
+arenaContext.scale(20, 20);
+
+const nextPieceCanvas = document.getElementById('nextPieceCanvas');
+const nextPieceContext = nextPieceCanvas.getContext('2d');
+nextPieceContext.scale(20, 20);
 
 const matrixService = new MatrixService();
 const soundModule = new SoundModule(new AudioContext());
@@ -14,7 +18,7 @@ const highScore = new HighScore({
 highScore.init();
 
 const gameDisplay = new GameDisplay({
-    scoreElement:          document.getElementById('score'),
+    scoreElement: document.getElementById('score'),
     levelSelectionElement: document.getElementById('levelSelectionOverlay'),
 });
 const tetrisGame = new TetrisGame();
