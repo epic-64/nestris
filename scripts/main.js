@@ -17,11 +17,14 @@ const highScore = new HighScore({
 });
 highScore.init();
 
+const tetrisGame = new TetrisGame({
+    gameState: gameState
+});
+
 const gameDisplay = new GameDisplay({
     scoreElement: document.getElementById('score'),
     levelSelectionElement: document.getElementById('levelSelectionOverlay'),
 });
-const tetrisGame = new TetrisGame();
 
 document.addEventListener('keydown', event => {
     tetrisGame.handleKeyDown(event);
