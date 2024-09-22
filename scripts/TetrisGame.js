@@ -62,12 +62,12 @@ class TetrisGame {
             gameState.framesSinceLastDrop++;
 
             if (gameState.isSoftDropping()) {
-                gameState.handleSoftDrop(activePiece, arena);
+                gameState.handleSoftDrop();
             } else {
                 gameState.softDropFrameCount = 0;
 
                 if (gameState.framesSinceLastDrop >= gameState.framesPerDrop) {
-                    activePiece.drop(arena);
+                    this.dropActivePiece();
                     gameState.framesSinceLastDrop = 0;
                 }
             }
@@ -78,6 +78,20 @@ class TetrisGame {
         }
 
         requestAnimationFrame(this.update.bind(this));
+    }
+
+    dropActivePiece() {
+        activePiece.pos.y++;
+
+        if (matrixService.collide(arena, activePiece)) {
+            activePiece.pos.y--;
+            matrixService.merge(arena, activePiece);
+            soundModule.playPieceLockSound();
+
+            gameState.softDropLock = true; // interrupt soft drop when piece locks
+            this.resetActivePiece(arena);
+            this.arenaSweep();
+        }
     }
 
     updateLevel() {
@@ -188,7 +202,7 @@ class TetrisGame {
         if (matrixService.collide(arena, activePiece)) {
             gameState.gameOver = true;
             gameState.running = false;
-            tetrisGame.showGameOver();
+            this.showGameOver();
             highScore.update(gameState.score);
         }
     }

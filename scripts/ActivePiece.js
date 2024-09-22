@@ -30,20 +30,6 @@ class ActivePiece {
         }
     }
 
-    drop(arena) {
-        this.pos.y++;
-
-        if (matrixService.collide(arena, this)) {
-            this.pos.y--;
-            matrixService.merge(arena, this);
-            soundModule.playPieceLockSound();
-
-            gameState.softDropLock = true; // interrupt soft drop when piece locks
-            tetrisGame.resetActivePiece(arena);
-            tetrisGame.arenaSweep();
-        }
-    }
-
     reset(arena) {
         this.matrix = tetrisGame.getNewPieceMatrix();
 

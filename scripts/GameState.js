@@ -106,11 +106,11 @@ class GameState {
         return !this.softDropLock && this.keyState['ArrowDown'];
     }
 
-    handleSoftDrop(player, arena) {
+    handleSoftDrop() {
         this.softDropFrameCount++;
 
         if (this.softDropFrameCount >= this.framesPerSoftDrop) {
-            player.drop(arena);
+            tetrisGame.dropActivePiece();
 
             this.softDropFrameCount = 0;
             this.framesSinceLastDrop = 0;
