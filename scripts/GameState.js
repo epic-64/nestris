@@ -7,17 +7,24 @@ class GameState {
     startLevel = 0;
     linesClearedTotal = 0;
 
+    // game states
     running = false;
     paused = false;
     animating = false;
     gameOver = false;
 
+    // auto drop
     framesSinceLastDrop = 0;
     framesPerDrop = 48;
 
+    // soft drop
     softDropFrameCount = 0;
     softDropSpeedMultiplier = 0.5;
     framesPerSoftDrop = 1;
+
+    // movement delays
+    moveFrameCount = 0;
+    moveFrameInterval = 10; // Frames between moves (adjust for desired speed)
 
     keyState = {};
 
@@ -77,11 +84,34 @@ class GameState {
             // Reset frame counters to prevent jumps
             this.framesSinceLastDrop = 0;
             this.softDropFrameCount = 0;
-            moveFrameCount = moveFrameInterval;
+            this.moveFrameCount = this.moveFrameInterval;
         }
     }
 
     getFramesPerDrop(level) {
         return this.framesPerDropTable[level] || 1;
+    }
+
+    getColor(value) {
+        return this.colors[value];
+    }
+
+    getBrightColor(value) {
+        return this.brightColors[value];
+    }
+
+    isSoftDropping() {
+        return this.keyState['ArrowDown'];
+    }
+
+    handleSoftDrop(player, arena) {
+        this.softDropFrameCount++;
+
+        if (this.softDropFrameCount >= this.framesPerSoftDrop) {
+            player.drop(arena);
+
+            this.softDropFrameCount = 0;
+            this.framesSinceLastDrop = 0;
+        }
     }
 }

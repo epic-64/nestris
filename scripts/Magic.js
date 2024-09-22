@@ -23,7 +23,7 @@ function arenaSweep() {
             player.score += points[linesCleared.length] * (gameState.level + 1);
             gameState.linesClearedTotal += linesCleared.length;
             gameState.level = Math.min(10, gameState.startLevel + Math.floor(gameState.linesClearedTotal / 10));
-            updateLevel();
+            tetrisGame.updateLevel();
             gameState.animating = false;
 
             // Reset frame count after line clear
@@ -63,10 +63,10 @@ function animateLineClear(linesCleared, callback) {
     function animateLighting() {
         if (currentStep < cellsToAnimate.length) {
             const cell = cellsToAnimate[currentStep];
-            draw(); // Redraw arena and player
+            tetrisGame.draw(); // Redraw arena and player
 
             // Draw lit-up cell
-            canvasContext.fillStyle = getBrightColor(cell.value);
+            canvasContext.fillStyle = gameState.getBrightColor(cell.value);
             canvasContext.fillRect(cell.x, cell.y, 1, 1);
 
             currentStep++;
@@ -81,7 +81,7 @@ function animateLineClear(linesCleared, callback) {
         if (currentStep < cellsToDelete.length) {
             const cell = cellsToDelete[currentStep];
             arena[cell.y][cell.x] = 0;
-            draw();
+            tetrisGame.draw();
             currentStep++;
             setTimeout(animateDeletion, perCellDuration);
         } else {

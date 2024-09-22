@@ -93,4 +93,17 @@ class MatrixService {
     createPiece(type) {
         return this.tetrominoes[type];
     }
+
+    drawMatrix(matrix, offset) {
+        matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    canvasContext.fillStyle = gameState.getColor(value);
+                    canvasContext.fillRect(x + offset.x,
+                        y + offset.y,
+                        1, 1);
+                }
+            });
+        });
+    }
 }

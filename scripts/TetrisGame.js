@@ -9,11 +9,11 @@ class TetrisGame {
     }
 
     // Start the game only after the first piece is generated
-    startGame() {
+    start() {
         // Reset frame counters
         gameState.framesSinceLastDrop = 0;
         gameState.softDropFrameCount = 0;
-        moveFrameCount = moveFrameInterval;
+        gameState.moveFrameCount = gameState.moveFrameInterval;
 
         // Reset key states
         gameState.keyState = {};
@@ -29,7 +29,7 @@ class TetrisGame {
 
         gameState.running = true;
 
-        updateLevel();
+        this.updateLevel();
         this.updateDebugDisplay();
 
         this.update(); // Start the game loop
@@ -54,8 +54,8 @@ class TetrisGame {
         if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
             gameState.framesSinceLastDrop++;
 
-            if (isSoftDropping(gameState.keyState)) {
-                handleSoftDrop();
+            if (gameState.isSoftDropping()) {
+                gameState.handleSoftDrop(player, arena);
             } else {
                 gameState.softDropFrameCount = 0;
 
@@ -65,9 +65,9 @@ class TetrisGame {
                 }
             }
 
-            handleInput();
+            this.handleInput();
 
-            draw();
+            this.draw();
         }
 
         requestAnimationFrame(this.update.bind(this));
@@ -80,7 +80,7 @@ class TetrisGame {
         gameState.running = false; // Stop the game loop
         document.getElementById('gameOverOverlay').style.display = 'none';
         document.getElementById('levelSelectionOverlay').style.display = 'flex';
-        updateScoreDisplay();
+        gameDisplay.updateScoreDisplay();
 
         // Reset key states
         gameState.keyState = {};
@@ -93,5 +93,43 @@ class TetrisGame {
 
         // Update debug info
         this.updateDebugDisplay();
+    }
+
+    updateLevel() {
+        gameState.framesPerDrop = gameState.getFramesPerDrop(gameState.level);
+        gameState.framesPerSoftDrop = Math.max(1, Math.min(Math.floor(gameState.framesPerDrop * gameState.softDropSpeedMultiplier), 5));
+        gameState.keyState = {};
+        gameDisplay.updateScoreDisplay();
+        this.updateDebugDisplay();
+    }
+
+    handleInput() {
+        // Move Left
+        if (gameState.keyState['ArrowLeft']) {
+            gameState.moveFrameCount++;
+            if (gameState.moveFrameCount >= gameState.moveFrameInterval) {
+                player.move(-1, arena);
+                gameState.moveFrameCount = 0;
+            }
+        }
+
+        // Move Right
+        else if (gameState.keyState['ArrowRight']) {
+            gameState.moveFrameCount++;
+            if (gameState.moveFrameCount >= gameState.moveFrameInterval) {
+                player.move(1, arena);
+                gameState.moveFrameCount = 0;
+            }
+        } else {
+            gameState.moveFrameCount = gameState.moveFrameInterval; // Reset to allow immediate move on next key press
+        }
+    }
+
+    draw() {
+        canvasContext.fillStyle = '#000';
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+        matrixService.drawMatrix(arena, {x: 0, y: 0});
+        matrixService.drawMatrix(player.matrix, player.pos);
     }
 }
