@@ -3,15 +3,17 @@ class GameState {
 
     }
 
-    framesSinceLastDrop = 0;
-    framesPerDrop = 48;
+    level = 0;
+    startLevel = 0;
+    linesClearedTotal = 0;
+
+    running = false;
     paused = false;
     animating = false;
     gameOver = false;
-    gameRunning = false;
-    startLevel = 0;
-    level = 0;
-    linesClearedTotal = 0;
+
+    framesSinceLastDrop = 0;
+    framesPerDrop = 48;
 
     softDropFrameCount = 0;
     softDropSpeedMultiplier = 0.5;
@@ -62,5 +64,24 @@ class GameState {
 
     unpause() {
         this.paused = false;
+    }
+
+    togglePause({pauseOverlay}) {
+        this.paused = !this.paused;
+
+        if (this.paused) {
+            pauseOverlay.style.display = 'flex';
+        } else {
+            pauseOverlay.style.display = 'none';
+
+            // Reset frame counters to prevent jumps
+            this.framesSinceLastDrop = 0;
+            this.softDropFrameCount = 0;
+            moveFrameCount = moveFrameInterval;
+        }
+    }
+
+    getFramesPerDrop(level) {
+        return this.framesPerDropTable[level] || 1;
     }
 }
