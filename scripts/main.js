@@ -27,22 +27,20 @@ document.addEventListener('keyup', event => {
     tetrisGame.handleKeyUp(event);
 });
 
-document.getElementById('pauseButton').addEventListener('click', () => {
-    if (!gameState.animating && !gameState.gameOver) {
-        gameState.togglePause({ pauseOverlay: document.getElementById('pauseOverlay') });
-    }
+document.getElementById('startGameButton').addEventListener('click', () => {
+    tetrisGame.start()
 });
 
 document.getElementById('restartButton').addEventListener('click', () => {
     tetrisGame.reset();
 });
 
-function onStartGameButtonClick() {
-    tetrisGame.start();
-}
-
-document.getElementById('startGameButton').addEventListener('click', onStartGameButtonClick);
+document.getElementById('pauseButton').addEventListener('click', () => {
+    if (!gameState.animating && !gameState.gameOver) {
+        gameState.togglePause({ pauseOverlay: document.getElementById('pauseOverlay') });
+    }
+});
 
 gameDisplay.showLevelSelection();
 gameDisplay.updateScoreDisplay();
-tetrisGame.updateDebugDisplay();
+gameDisplay.updateDebugDisplay();

@@ -26,10 +26,10 @@ class TetrisGame {
         arena.forEach(row => row.fill(0));
         player.reset(arena);
 
-        gameDisplay.hideLevelSelection();
-
         this.updateLevel();
-        this.updateDebugDisplay();
+        gameDisplay.hideLevelSelection();
+        gameDisplay.updateDebugDisplay();
+
         this.update(); // Start the game loop
     }
 
@@ -52,20 +52,7 @@ class TetrisGame {
         arena.forEach(row => row.fill(0));
 
         // Update debug info
-        this.updateDebugDisplay();
-    }
-
-    // Debug Information Function
-    updateDebugDisplay() {
-        const framesPerDropValue = gameState.framesPerDropTable[gameState.level] || 1;
-
-        document.getElementById('debugInfo').innerHTML = `
-                <strong>Debug Info:</strong><br>
-                level: ${gameState.level}<br>
-                Lines Cleared: ${gameState.linesClearedTotal}<br>
-                Frames Per Drop: ${framesPerDropValue}<br>
-                Frames Per Soft Drop: ${gameState.framesPerSoftDrop}
-            `;
+        gameDisplay.updateDebugDisplay();
     }
 
     update() {
@@ -98,7 +85,7 @@ class TetrisGame {
         gameState.framesPerSoftDrop = Math.max(1, Math.min(Math.floor(gameState.framesPerDrop * gameState.softDropSpeedMultiplier), 5));
         gameState.keyState = {};
         gameDisplay.updateScoreDisplay();
-        this.updateDebugDisplay();
+        gameDisplay.updateDebugDisplay();
     }
 
     /**
