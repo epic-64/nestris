@@ -19,34 +19,12 @@ const gameDisplay = new GameDisplay({
 });
 const tetrisGame = new TetrisGame();
 
-// Handle keydown events
 document.addEventListener('keydown', event => {
-    if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
-        if (!event.repeat) {
-            // Process rotations on keydown, ignoring repeats
-            if (event.code === 'KeyA') {
-                player.rotate(-1, arena);
-            } else if (event.code === 'KeyD') {
-                player.rotate(1, arena);
-            } else if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
-                gameState.moveFrameCount = gameState.moveFrameInterval; // Allow immediate move
-                tetrisGame.handleInput();
-            }
-        }
-        gameState.keyState[event.code] = true;
-    }
-    if (event.code === 'Escape') { // Escape key to toggle pause
-        if (!gameState.animating && !gameState.gameOver) {
-            gameState.togglePause({ pauseOverlay: document.getElementById('pauseOverlay') });
-        }
-    }
+    tetrisGame.handleKeyDown(event);
 });
 
-// Handle keyup events
 document.addEventListener('keyup', event => {
-    if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
-        gameState.keyState[event.code] = false;
-    }
+    tetrisGame.handleKeyUp(event);
 });
 
 document.getElementById('pauseButton').addEventListener('click', () => {
@@ -60,15 +38,6 @@ document.getElementById('restartButton').addEventListener('click', () => {
 });
 
 function onStartGameButtonClick() {
-    gameState.startLevel = parseInt(document.getElementById('startLevelInput').value);
-    if (isNaN(gameState.startLevel) || gameState.startLevel < 0) {
-        gameState.startLevel = 0;
-    }
-    gameState.level = gameState.startLevel;
-    tetrisGame.updateLevel();
-
-    gameDisplay.hideLevelSelection();
-
     tetrisGame.start();
 }
 

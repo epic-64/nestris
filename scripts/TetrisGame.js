@@ -8,12 +8,39 @@ class TetrisGame {
         document.getElementById('gameOverOverlay').style.display = 'flex';
     }
 
-    // Start the game only after the first piece is generated
     start() {
-        // Reset frame counters
+        gameState.startLevel = parseInt(document.getElementById('startLevelInput').value);
+        if (isNaN(gameState.startLevel) || gameState.startLevel < 0) {
+            gameState.startLevel = 0;
+        }
+
+        gameState.level = gameState.startLevel;
         gameState.framesSinceLastDrop = 0;
         gameState.softDropFrameCount = 0;
         gameState.moveFrameCount = gameState.moveFrameInterval;
+
+        gameState.keyState = {};
+        gameState.linesClearedTotal = 0;
+        gameState.running = true;
+
+        arena.forEach(row => row.fill(0));
+        player.reset(arena);
+
+        gameDisplay.hideLevelSelection();
+
+        this.updateLevel();
+        this.updateDebugDisplay();
+        this.update(); // Start the game loop
+    }
+
+    reset() {
+        player.score = 0;
+        gameState.gameOver = false;
+        gameState.paused = false;
+        gameState.running = false; // Stop the game loop
+        document.getElementById('gameOverOverlay').style.display = 'none';
+        document.getElementById('levelSelectionOverlay').style.display = 'flex';
+        gameDisplay.updateScoreDisplay();
 
         // Reset key states
         gameState.keyState = {};
@@ -24,15 +51,8 @@ class TetrisGame {
         // Clear the arena
         arena.forEach(row => row.fill(0));
 
-        // Initialize the player's piece
-        player.reset(arena);
-
-        gameState.running = true;
-
-        this.updateLevel();
+        // Update debug info
         this.updateDebugDisplay();
-
-        this.update(); // Start the game loop
     }
 
     // Debug Information Function
@@ -65,34 +85,12 @@ class TetrisGame {
                 }
             }
 
-            this.handleInput();
+            this.handleHorizontalInput();
 
             this.draw();
         }
 
         requestAnimationFrame(this.update.bind(this));
-    }
-
-    reset() {
-        player.score = 0;
-        gameState.gameOver = false;
-        gameState.paused = false;
-        gameState.running = false; // Stop the game loop
-        document.getElementById('gameOverOverlay').style.display = 'none';
-        document.getElementById('levelSelectionOverlay').style.display = 'flex';
-        gameDisplay.updateScoreDisplay();
-
-        // Reset key states
-        gameState.keyState = {};
-
-        // Reset lines cleared total
-        gameState.linesClearedTotal = 0;
-
-        // Clear the arena
-        arena.forEach(row => row.fill(0));
-
-        // Update debug info
-        this.updateDebugDisplay();
     }
 
     updateLevel() {
@@ -103,7 +101,39 @@ class TetrisGame {
         this.updateDebugDisplay();
     }
 
-    handleInput() {
+    /**
+     * @param event KeyboardEvent
+     */
+    handleKeyDown(event) {
+        if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
+            if (!event.repeat) {
+                // Process rotations on keydown, ignoring repeats
+                if (event.code === 'KeyA') {
+                    player.rotate(-1, arena);
+                } else if (event.code === 'KeyD') {
+                    player.rotate(1, arena);
+                } else if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
+                    gameState.moveFrameCount = gameState.moveFrameInterval; // Allow immediate move
+
+                    tetrisGame.handleHorizontalInput();
+                }
+            }
+            gameState.keyState[event.code] = true;
+        }
+        if (event.code === 'Escape') { // Escape key to toggle pause
+            if (!gameState.animating && !gameState.gameOver) {
+                gameState.togglePause({ pauseOverlay: document.getElementById('pauseOverlay') });
+            }
+        }
+    }
+
+    handleKeyUp(event) {
+        if (!gameState.paused && !gameState.animating && !gameState.gameOver) {
+            gameState.keyState[event.code] = false;
+        }
+    }
+
+    handleHorizontalInput() {
         // Move Left
         if (gameState.keyState['ArrowLeft']) {
             gameState.moveFrameCount++;
@@ -112,7 +142,6 @@ class TetrisGame {
                 gameState.moveFrameCount = 0;
             }
         }
-
         // Move Right
         else if (gameState.keyState['ArrowRight']) {
             gameState.moveFrameCount++;
