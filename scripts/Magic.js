@@ -20,7 +20,7 @@ function arenaSweep() {
             });
 
             let points = [0, 40, 100, 300, 1200];
-            player.score += points[linesCleared.length] * (gameState.level + 1);
+            gameState.score += points[linesCleared.length] * (gameState.level + 1);
             gameState.linesClearedTotal += linesCleared.length;
             gameState.level = Math.min(10, gameState.startLevel + Math.floor(gameState.linesClearedTotal / 10));
             tetrisGame.updateLevel();

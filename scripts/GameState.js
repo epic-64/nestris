@@ -3,6 +3,7 @@ class GameState {
 
     }
 
+    score = 0;
     level = 0;
     startLevel = 0;
     linesClearedTotal = 0;

@@ -8,7 +8,7 @@ class GameDisplay {
     }
 
     updateScoreDisplay() {
-        this.scoreElement.innerText = 'Score: ' + player.score + ' | level: ' + gameState.level;
+        this.scoreElement.innerText = 'Score: ' + gameState.score + ' | level: ' + gameState.level;
     }
 
     hideLevelSelection() {

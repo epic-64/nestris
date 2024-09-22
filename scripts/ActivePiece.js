@@ -1,8 +1,7 @@
-class Player {
+class ActivePiece {
     constructor() {
         this.pos = {x: 0, y: 0};
         this.matrix = null;
-        this.score = 0;
     }
 
     move(dir, arena) {
@@ -40,7 +39,7 @@ class Player {
             soundModule.playPieceLockSound();
 
             gameState.softDropLock = true; // interrupt soft drop when piece locks
-            this.reset(arena);
+            tetrisGame.resetActivePiece(arena);
             arenaSweep();
         }
     }
@@ -52,12 +51,5 @@ class Player {
         this.pos.x =
             (arena[0].length / 2 | 0) -
             (this.matrix[0].length / 2 | 0);
-
-        if (matrixService.collide(arena, this)) {
-            gameState.gameOver = true;
-            gameState.running = false;
-            tetrisGame.showGameOver();
-            highScore.update(this.score);
-        }
     }
 }

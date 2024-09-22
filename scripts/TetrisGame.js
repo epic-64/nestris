@@ -4,7 +4,7 @@ class TetrisGame {
     }
 
     showGameOver() {
-        document.getElementById('finalScore').innerText = 'Final Score: ' + player.score;
+        document.getElementById('finalScore').innerText = 'Final Score: ' + gameState.score;
         document.getElementById('gameOverOverlay').style.display = 'flex';
     }
 
@@ -24,7 +24,7 @@ class TetrisGame {
         gameState.running = true;
 
         arena.forEach(row => row.fill(0));
-        player.reset(arena);
+        this.resetActivePiece(arena);
 
         this.updateLevel();
         gameDisplay.hideLevelSelection();
@@ -34,7 +34,7 @@ class TetrisGame {
     }
 
     reset() {
-        player.score = 0;
+        gameState.score = 0;
         gameState.gameOver = false;
         gameState.paused = false;
         gameState.running = false; // Stop the game loop
@@ -62,12 +62,12 @@ class TetrisGame {
             gameState.framesSinceLastDrop++;
 
             if (gameState.isSoftDropping()) {
-                gameState.handleSoftDrop(player, arena);
+                gameState.handleSoftDrop(activePiece, arena);
             } else {
                 gameState.softDropFrameCount = 0;
 
                 if (gameState.framesSinceLastDrop >= gameState.framesPerDrop) {
-                    player.drop(arena);
+                    activePiece.drop(arena);
                     gameState.framesSinceLastDrop = 0;
                 }
             }
@@ -96,9 +96,9 @@ class TetrisGame {
             if (!event.repeat) {
                 // Process rotations on keydown, ignoring repeats
                 if (event.code === 'KeyA') {
-                    player.rotate(-1, arena);
+                    activePiece.rotate(-1, arena);
                 } else if (event.code === 'KeyD') {
-                    player.rotate(1, arena);
+                    activePiece.rotate(1, arena);
                 } else if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
                     gameState.moveFrameCount = gameState.moveFrameInterval; // Allow immediate move
 
@@ -127,7 +127,7 @@ class TetrisGame {
         if (gameState.keyState['ArrowLeft']) {
             gameState.moveFrameCount++;
             if (gameState.moveFrameCount >= gameState.moveFrameInterval) {
-                player.move(-1, arena);
+                activePiece.move(-1, arena);
                 gameState.moveFrameCount = 0;
             }
         }
@@ -135,7 +135,7 @@ class TetrisGame {
         else if (gameState.keyState['ArrowRight']) {
             gameState.moveFrameCount++;
             if (gameState.moveFrameCount >= gameState.moveFrameInterval) {
-                player.move(1, arena);
+                activePiece.move(1, arena);
                 gameState.moveFrameCount = 0;
             }
         } else {
@@ -148,7 +148,7 @@ class TetrisGame {
         arenaContext.fillRect(0, 0, arenaCanvas.width, arenaCanvas.height);
 
         matrixService.drawMatrix(arenaContext, arena, {x: 0, y: 0});
-        matrixService.drawMatrix(arenaContext, player.matrix, player.pos);
+        matrixService.drawMatrix(arenaContext, activePiece.matrix, activePiece.pos);
 
         nextPieceContext.fillStyle = '#000';
         nextPieceContext.fillRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
@@ -157,8 +157,6 @@ class TetrisGame {
     }
 
     getNewPieceMatrix() {
-        const letters = 'TJLOSZI';
-
         // new piece is the next piece
         let newPiece =  this.nextPiece;
 
@@ -182,5 +180,16 @@ class TetrisGame {
             letter: newLetter,
             matrix: matrixService.createPiece(newLetter)
         };
+    }
+
+    resetActivePiece() {
+        activePiece.reset(arena);
+
+        if (matrixService.collide(arena, activePiece)) {
+            gameState.gameOver = true;
+            gameState.running = false;
+            tetrisGame.showGameOver();
+            highScore.update(gameState.score);
+        }
     }
 }

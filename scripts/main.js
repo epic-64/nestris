@@ -10,7 +10,7 @@ const matrixService = new MatrixService();
 const soundModule = new SoundModule(new AudioContext());
 const gameState = new GameState();
 const arena = matrixService.createMatrix(10, 20);
-const player = new Player();
+const activePiece = new ActivePiece();
 const highScore = new HighScore({
     storageKey: 'tetrisHighScore',
     htmlElement: document.getElementById('high-score-inner')
