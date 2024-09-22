@@ -77,7 +77,6 @@ class Animate {
                 const cell = cellsToAnimate[currentStep];
                 tetrisGame.draw(); // Redraw arena and player
 
-                // Now 'this.gameState' will work correctly
                 arenaContext.fillStyle = this.gameState.getBrightColor(cell.value);
                 arenaContext.fillRect(cell.x, cell.y, 1, 1);
 
