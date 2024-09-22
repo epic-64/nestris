@@ -40,7 +40,7 @@ class ActivePiece {
 
             gameState.softDropLock = true; // interrupt soft drop when piece locks
             tetrisGame.resetActivePiece(arena);
-            arenaSweep();
+            tetrisGame.arenaSweep();
         }
     }
 
